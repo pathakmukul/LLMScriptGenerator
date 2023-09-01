@@ -56,13 +56,12 @@ def generate_detailed_content(llm, content_input, video_length, video_style, ton
 
 # Streamlit UI
 st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
-st.header("ScriptMaven 📜🧠: Your Edu-Video Blueprint")
+st.header("Script:red[Maven] 📜🧠")
+st.subheader("Your Edu-Video Blueprint", divider='rainbow')
+st.write("Automate and optimize your educational video scripting with ScriptMaven. Leveraging OpenAI's GPT-4, it transforms raw text into structured video scripts tailored for various audiences and styles.")
 # Add the Side Panel
 st.sidebar.header('Product Description')
-st.sidebar.subheader('ScriptMaven 📜🧠: Edu-Video Blueprinting')
 st.sidebar.markdown("""
-Automate and optimize your educational video scripting with ScriptMaven. Leveraging OpenAI's GPT-4, it transforms raw text into structured video scripts tailored for various audiences and styles.
-
 **Key Features:**
 - Multiple video styles and tones.
 - Adjustable video lengths.
@@ -74,28 +73,58 @@ st.sidebar.markdown("""
 - Corporate Trainers
 - Educational Institutions
 """)
-st.sidebar.header('Why Choose It?')
-st.sidebar.markdown("""
-- Speed
-- Efficiency
-- Personalization
-""")
+
 st.sidebar.header('How to Use:')
 st.sidebar.markdown("""
+[Get your OpenAI API Key from here](https://platform.openai.com/signup)
 1. **API Key**: Enter OpenAI API key.
 2. **Style & Tone**: Select from options.
 3. **Video Length & Type**: Choose.
 4. **Raw Content**: Paste.
 5. **Generate Plan**: Click.
-6. **Review & Finalize**: Obtain and tweak script.
+6. **Review & Finalize**: Obtain the script.
 """)
+# icons
+# Add Font Awesome CSS
+st.markdown("""
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    """, unsafe_allow_html=True)
+
+# ... Existing code for sidebar and Font Awesome inclusion
+
+# Add social media icons at the bottom
+st.sidebar.markdown('---')  # Horizontal line for separation
+st.sidebar.markdown("### Socials:")
+st.sidebar.markdown("""
+<div style="display: flex; flex-direction: row; align-items: center;">
+    <a href="https://github.com/pathakmukul" target="_blank" style="margin-right: 20px; text-decoration: none;">
+        <i class="fab fa-github fa-2x" style="color: white;"></i>
+    </a>
+    <a href="https://twitter.com/twitter" target="_blank" style="margin-right: 20px; text-decoration: none;">
+        <i class="fab fa-twitter fa-2x" style="color: inherit;"></i>
+    </a>
+    <a href="https://huggingface.co/broductmanager" target="_blank" style="font-size: 28px; text-decoration: none; color: inherit;">
+        🤗
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+# f
+# Create columns for the API Key input and the Get Key link
 
 openai_api_key = st.text_input("OpenAI API Key", placeholder="Ex: sk-2twmA8tfCb8un4...")
-video_style = st.selectbox('Video Style:', ('YouTube', 'Corporate'))
-tone = st.selectbox('Tone:', ('For Students', 'College student', 'New Employee', 'CxO Level', 'For Teens'))
-video_length = st.selectbox('Video Length:', ('5', '10m', '15m', '20m', '30m'))
-content_type = st.selectbox('Content Type:', ('Case Study', 'Masterclass', 'Documentary', 'How-to Videos', 'Coding', 'Summary', 'Review'))
-content_input = st.text_area("Content Input", placeholder="Your content deserves to be here...")
+# Create 2x2 grid for the select boxes
+col1, col2 = st.columns(2)
+with col1:
+    video_style = st.selectbox('Video Style:', ('YouTube', 'Corporate'))
+    video_length = st.selectbox('Video Length(minutes):', ('3','5', '10', '15'))
+
+with col2:
+    tone = st.selectbox('Audience:', ('School Students', 'College Students', 'Employee', 'For Teens'))
+    content_type = st.selectbox('Content Type:', ('Case Study', 'Masterclass', 'Documentary', 'How-to Videos', 'Coding', 'Summary', 'Review'))
+
+# Text area below the 2x2 grid
+content_input = st.text_area("Content Input", placeholder="Your content deserves to be here 👑 ")
 
 
 # Generate plan button
@@ -114,3 +143,10 @@ if st.button("Generate Plan"):
     
     st.write("Generated Detailed Scripts:")
     st.write(detailed_content)
+    
+    
+# Add footer
+st.markdown(
+    "<div style='text-align: center;'>Made with <span style='color: red;'>&hearts;</span> by Mukul.</div>",
+    unsafe_allow_html=True,
+)
