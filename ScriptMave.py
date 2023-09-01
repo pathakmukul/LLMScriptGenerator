@@ -49,6 +49,52 @@ def generate_detailed_content(llm, content_input, video_length, video_style, ton
     detailed_content = llm(prompt)
     return detailed_content
 
+# Existing imports
+import streamlit as st
+from langchain import PromptTemplate
+from langchain.llms import OpenAI
+import math
+
+# ... Your existing functions
+
+# Streamlit UI
+st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
+st.header("ScriptMaven 📜🧠: Your Edu-Video Blueprint")
+
+# Add the Side Panel
+st.sidebar.header('Product Description')
+st.sidebar.subheader('ScriptMaven 📜🧠: Edu-Video Blueprinting')
+st.sidebar.markdown("""
+Automate and optimize your educational video scripting with ScriptMaven. Leveraging OpenAI's GPT-4, it transforms raw text into structured video scripts tailored for various audiences and styles.
+
+**Key Features:**
+- Multiple video styles and tones.
+- Adjustable video lengths.
+- Varied content types.
+""")
+st.sidebar.header("Who's it for?")
+st.sidebar.markdown("""
+- Content Creators
+- Corporate Trainers
+- Educational Institutions
+""")
+st.sidebar.header('Why Choose It?')
+st.sidebar.markdown("""
+- Speed
+- Efficiency
+- Personalization
+""")
+st.sidebar.header('How to Use:')
+st.sidebar.markdown("""
+1. **API Key**: Enter OpenAI API key.
+2. **Style & Tone**: Select from options.
+3. **Video Length & Type**: Choose.
+4. **Raw Content**: Paste.
+5. **Generate Plan**: Click.
+6. **Review & Finalize**: Obtain and tweak script.
+""")
+
+# ... The rest of your existing code for main panel
 
 
 # Streamlit UI
