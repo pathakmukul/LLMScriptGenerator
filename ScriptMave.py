@@ -3,7 +3,6 @@ from langchain import PromptTemplate
 from langchain.llms import OpenAI
 import math
 
-
 # LLM loading function
 def load_LLM(openai_api_key):
     llm = OpenAI(openai_api_key=openai_api_key)
@@ -49,11 +48,7 @@ def generate_detailed_content(llm, content_input, video_length, video_style, ton
     detailed_content = llm(prompt)
     return detailed_content
 
-# Existing imports
-import streamlit as st
-from langchain import PromptTemplate
-from langchain.llms import OpenAI
-import math
+
 
 # ... Your existing functions
 
