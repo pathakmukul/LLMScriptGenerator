@@ -54,7 +54,9 @@ def generate_detailed_content(llm, content_input, video_length, video_style, ton
 
 # Streamlit UI
 
-
+# Streamlit UI
+st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
+st.header("ScriptMaven 📜🧠: Your Edu-Video Blueprint")
 # Add the Side Panel
 st.sidebar.header('Product Description')
 st.sidebar.subheader('ScriptMaven 📜🧠: Edu-Video Blueprinting')
@@ -87,14 +89,6 @@ st.sidebar.markdown("""
 5. **Generate Plan**: Click.
 6. **Review & Finalize**: Obtain and tweak script.
 """)
-
-# ... The rest of your existing code for main panel
-
-
-# Streamlit UI
-st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
-st.header("ScriptMaven 📜🧠: Your Edu-Video Blueprint")
-
 
 openai_api_key = st.text_input("OpenAI API Key", placeholder="Ex: sk-2twmA8tfCb8un4...")
 video_style = st.selectbox('Video Style:', ('YouTube', 'Corporate'))
