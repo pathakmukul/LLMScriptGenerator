@@ -58,8 +58,7 @@ import math
 # ... Your existing functions
 
 # Streamlit UI
-st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
-st.header("ScriptMaven 📜🧠: Your Edu-Video Blueprint")
+
 
 # Add the Side Panel
 st.sidebar.header('Product Description')
