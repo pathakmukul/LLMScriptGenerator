@@ -4,7 +4,7 @@ import numpy as np
 import openai
 
 # Set up OpenAI API key
-openai.api_key = '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'
+openai.api_key = 'sk-'
 
 # Function to generate a description of the DataFrame
 def dataframe_description(df):
