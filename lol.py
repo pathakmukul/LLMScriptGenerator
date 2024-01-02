@@ -35,7 +35,7 @@ def query_gpt4(prompt, dataframes):
     combined_description = "\n".join(df_descriptions.values())
     
     full_prompt = f"""You are an expert Python data analyst command builder tool. For the user given task: {prompt}, you will construct a command to perform the user given task. As an output only give the python command, nothing else. DATAFRAMES and their DESCRIPTIONS: \n{combined_description}\nAlways pick column names from the dfs to create queries. For any graph/plot, use streamlit chart elements. For example, to plot a line graph, use st.line_chart(df) and for bar graph, use st.bar_chart(df). For any other graph, use the appropriate streamlit chart elements. 
-For st.pyplot() pass an object, to keep it thread-safe. As an output only give the python code, no other text, not even import.
+For st.pyplot() pass an object, to keep it thread-safe. As an output only give the python code, no other text, no comments and not even import.
     """
 
     messages = [{"role": "user", "content": full_prompt}]
@@ -155,11 +155,13 @@ if st.button('Send'):
     # Execute the command and get the result
     command_result = execute_command(command_response, dataframes, st)
     
-    # result_message = ":green[Result:] " + str(command_result)
-    # st.session_state.conversation.append(result_message)
-    if 'result' in st.session_state:
-        st.session_state.conversation.append(":green[Result:] " + str(st.session_state['result']))
-        st.write(st.session_state['result'])
+    result_message = ":green[Result:] " + str(command_result)
+    st.session_state.conversation.append(result_message)
+
+
+    # if 'result' in st.session_state:
+    #     st.session_state.conversation.append(":green[Result:] " + str(st.session_state['result']))
+    #     st.write(st.session_state['result'])
 
     if 'plot' in st.session_state:
         st.session_state.conversation.append(":green[Plot displayed]")
