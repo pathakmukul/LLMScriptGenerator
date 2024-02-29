@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professional Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+        .header-gradient {
+            background: linear-gradient(90deg, #1A1F71 0%, #F7B600 100%);
+            color: #FFF;
+            padding: 1rem 0;
+            text-align: center;
+            font-weight: 600;
+        }
+        .professional-btn {
+            background-color: #1A1F71; /* Primary color */
+            color: #FFF;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .professional-btn:hover {
+            background-color: #F7B600; /* Secondary color */
+        }
+        .dropdown-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .dropdown-input {
+            padding: 0.5rem;
+            border: 1px solid #ccc;
+            width: 100%;
+        }
+        .form-submit {
+            display: flex;
+            justify-content: center;
+            padding: 1rem 0;
+        }
+        .submit-btn {
+        background-color: blue; /* Change to blue */
+        border: none;
+        color: #F7B600;
+        padding: 0.5rem 1.5rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease; /* Add transition for smooth color change */
+    }
+        .submit-btn:hover {
+            .submit-btn:hover {
+        background-color: yellow; /* Change to yellow on hover */
+    }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-black">
+    <div class="header-gradient">
+        <h1>Professional Dashboard</h1>
+    </div>
+    <div class="container mx-auto px-4 py-8">
+        <form id="professional-form">
+            <div class="dropdown-container">
+                <select class="dropdown-input">
+                    <option value="">Merchant Name</option>
+                    <option value="Netflix">Netflix</option>
+                    <option value="Amazon">Amazon</option>
+                    <option value="Hulu">Hulu</option>
+                </select>
+                <select class="dropdown-input">
+                    <option value="">Peer Group Name</option>
+                    <option value="Grp1">Grp 1</option>
+                    <option value="Grp2">Grp 2</option>
+                </select>
+                <select class="dropdown-input">
+                    <option value="">Region</option>
+                    <option value="LAC">LAC</option>
+                    <option value="NA">NA</option>
+                </select>
+                <select class="dropdown-input">
+                    <option value="">KPI</option>
+                    <option value="Fraud">Fraud</option>
+                    <option value="New user">New user</option>
+                </select>
+            </div>
+            <div class="form-submit">
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Script for handling the form submission and any additional JavaScript functionalities
+    </script>
+</body>
+</html>
