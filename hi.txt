@@ -1,373 +1,142 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Training 2.0</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
-    <!-- <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.2/FileSaver.min.js"></script>
-    <script>
-          document.addEventListener('DOMContentLoaded', function() {
+from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, emit
+import os
+import openai
+from docx import Document
+from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
+import PyPDF2
+load_dotenv()
 
-            document.getElementById('download-button').addEventListener('click', function() {
-                var summary = "Summary:\n" + document.getElementById('summary-content').textContent + "\n";
-                var plan = "Plan:\n" + document.getElementById('plan-content').textContent + "\n";
-                var script = "Script:\n" + document.getElementById('script-content').textContent + "\n";
-                var screenplay = "Screenplay:\n" + document.getElementById('screenplay-content').textContent + "\n";
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'your_secret_key_here'
+socketio = SocketIO(app)
 
-                var content = summary + plan + script + screenplay;
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
-                var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
-                saveAs(blob, "script.doc");
-            });
-    const button = document.getElementById('generate-button');
-    const title = document.querySelector('[name="title"]');
-    const audience = document.querySelector('[name="audience"]');
-    const category = document.querySelector('[name="category"]');
-    const videoLength = document.querySelector('[name="video-length"]');
-    const content = document.querySelector('[name="content"]');
-    const fileInput = document.querySelector('[name="files"]');
-    var generateButton = document.getElementById('generate-button');
-            if (generateButton) {
-                generateButton.addEventListener('click', function() {
-                    var title = document.querySelector('[name="title"]').value;
-                    var audience = document.querySelector('[name="audience"]').value;
-                    var category = document.querySelector('[name="category"]').value;
-                    var videoLength = document.querySelector('[name="video-length"]').value;
-                    var content = document.querySelector('[name="content"]').value;
-                    // socket.emit('generate_content', {
-                    //     title: title,
-                    //     audience: audience, 
-                    //     category: category, 
-                    //     video_length: videoLength, 
-                    //     content: content 
-                    // });
-                    // Moved the visibility logic to the socket.on('content_update', ...) handler
-                });
-            } else {
-                console.error('Generate button not found!');
-            }
-    function updateButtonState() {
-      // Check if all fields have a value
-    //   if (title.value && audience.value && category.value && videoLength.value && content.value) {
-    //     button.disabled = false; // Enable the button
-    //   } else {
-    //     button.disabled = true; // Disable the button
-    //   }
-    const allFieldsFilled = title.value && audience.value && category.value && videoLength.value && (content.value || fileInput.files.length);
-      button.disabled = !allFieldsFilled;
+def AskGPT(prompt, content):
+    openai.api_key = OPENAI_API_KEY
 
-    }
+    try:
+        prompt = prompt
+        
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+        )
+        GPT_op = response.choices[0].message.content.strip()
+        print("GPT OP: ", GPT_op)
+        return GPT_op
+    except Exception as e:
+        print(f"An error occurred during processing: {e}")
+        return None
+
+   
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@socketio.on('generate_content')
+def handle_generate_content(data):
+    content = data['content']
+    audience = data['audience']
+    videoLength = data['video_length']
+    category = data['category']
+    title = data['title']
+    print("11222222222222222222222222222222222222audience: ", title)
     
-    // Add event listeners to all fields
-    [title, audience, category, videoLength, content, fileInput].forEach(field => {
-      field.addEventListener('change', updateButtonState);
-    //   field.addEventListener('keyup', updateButtonState); // For immediate response on text input
-    });
+
+    category_details = {
+    'Case Study': 'Purpose: Generate a comprehensive case study on a specified topic. Structure: Introduction, background, solutions, results, key takeaways. Data: Include data points, graphs, citations. Process: Outline, contextualize, detail issues, explain solutions, present results, summarize takeaways, add citations.',
+    'Onboarding': 'Purpose: Create an onboarding guide for a specific role or department. Elements: Company culture, job functions, key contacts, tools, platforms. Process: Structure guide, introduce company, enumerate job functions, list contacts, discuss tools.',
+    'Standard Procedures': 'Purpose: Outline standard procedures for a specific task or process. Content: Objectives, prerequisites, step-by-step actions, warnings, precautions. Process: List objectives, prerequisites, detail steps, insert warnings.',
+    'Code Walkthrough': 'Purpose: Conduct a code walkthrough for a specific programming task or project. Content: Code snippets, explanations, best practices. Process: Overview of project, include code snippets, explain functionality, discuss best practices.',
+    'How-To Videos': 'Purpose: Script a how-to video for a particular task, skill, or process. Structure: Introduction, materials, step-by-step guide, key takeaways. Process: Write introduction, list materials, create narrative, conclude with takeaways.',
+    'Cheat Sheets': 'Purpose: Create a cheat sheet for a skill, tool, or process. Content: Tips, shortcuts, essential commands. Process: Compile tips and shortcuts, add commands, organize for quick reference.',
+    'Masterclass': 'Purpose: Structure a masterclass on a specific topic or area of expertise. Elements: Learning objectives, in-depth modules, practical exercises, further learning resources. Process: Outline objectives, develop modules, include exercises, list additional resources.',
+    'Story': 'Purpose: Write a compelling story. Elements: Engaging plot, character development, setting, climax, resolution. Process: Establish setting, introduce characters, develop plot, build to climax, resolve story.'
+}
+    category_info = category_details.get(category, "")
+
+    summary_prompt = f"""# MISSION
+        You are a Sparse Priming Representation (SPR) writer. You will be given information by the USER here: {content},  which you are to render as an SPR.
+        Create a Sparse Primitive Representation of this technical document, which is a code walkthrough. Focus on summarizing the key functions of each code block, explaining the main algorithms, and their practical applications. Aim for a concise yet comprehensive overview that captures the essence of the document's coding content, suitable for readers with basic coding knowledge.
+        If not a coding or technical topic, Render the input as a distilled list of succinct statements, assertions, associations, concepts, analogies, and metaphors. The idea is to capture as much, conceptually, as possible but with as few words as possible. Write it in a way that makes sense to you, as the future audience will be another language model, not a human. Use complete sentences.
+        In Op only provide the SPR output."""
     
-    updateButtonState(); // Call on page load to set initial button state
-            var socket = io();
-
-            // 
-            button.addEventListener('click', function(e) {
-        e.preventDefault();
-        let formData = new FormData();
-
-        // Check if files are uploaded
-        if (fileInput.files.length > 0) {
-            // Add files to FormData to send for text extraction
-            for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('files', fileInput.files[i]);
-            }
-
-            // Fetch call to send files to server for text extraction
-            fetch('/upload_files', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(response => response.json())
-            .then(data => {
-                // Emit socket event with concatenated text from files
-                socket.emit('generate_content', { content: data.content, ...otherFormData() });
-            })
-            .catch(error => console.error('Error:', error));
-        } else {
-            // If no files are uploaded, use the content from the textarea
-            socket.emit('generate_content', { content: content.value, ...otherFormData() });
-        }
-    });
-
-    // Function to gather other form data
-    function otherFormData() {
-        return {
-            title: title.value,
-            audience: audience.value,
-            category: category.value,
-            video_length: videoLength.value
-        };
-    }
-
-            // 
-        
-            socket.on('content_update', function(data) {
-                // Directly update the appropriate section based on the data.type
-                switch (data.type) {
-                    case 'Summary':
-                        document.getElementById('summary-content').innerHTML = data.content;
-                        document.getElementById('summary-content').style.display = 'block'; // Ensure content is visible
-                        break;
-                    case 'Plan':
-                        document.getElementById('plan-content').innerHTML = data.content;
-                        document.getElementById('plan-content').style.display = 'block';
-                        break;
-                    case 'Script':
-                        document.getElementById('script-content').innerHTML = data.content;
-                        document.getElementById('script-content').style.display = 'block';
-                        break;
-                    case 'Screenplay':
-                        document.getElementById('screenplay-content').innerHTML = data.content;
-                        document.getElementById('screenplay-content').style.display = 'block';
-                        break;
-                }
-                console.log(`${data.type} updated`);
-        
-                // Make the tabs and download buttons visible when content is updated
-                document.querySelector('.tabs-container').style.display = 'flex'; // Adjust based on your layout
-                document.querySelector('.downloads-container').style.display = 'flex'; // Adjust based on your layout
-            });
-        
-            
-        
-            // Handle tab click to show related content and activate the tab
-            document.querySelectorAll('.tab-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    // Remove active class from all tabs and hide all content
-                    document.querySelectorAll('.tab-button').forEach(btn => {
-                        btn.classList.remove('active');
-                        const contentId = btn.getAttribute('data-content');
-                        document.getElementById(contentId).style.display = 'none';
-                    });
-                    // Add active class to clicked tab and show its content
-                    button.classList.add('active');
-                    const contentToShowId = button.getAttribute('data-content');
-                    document.getElementById(contentToShowId).style.display = 'block';
-                });
-            });
-        
-            // Click the first tab by default to show its content initially
-            document.querySelector('.tab-button').click();
-        });
-        
-
-//         document.querySelectorAll('.copy-button').forEach(button => {
-//     button.addEventListener('click', function() {
-//         // Create a temporary textarea to copy the text
-//         var tempTextArea = document.createElement('textarea');
-//         tempTextArea.value = this.parentElement.textContent;
-//         document.body.appendChild(tempTextArea);
-//         tempTextArea.select();
-//         document.execCommand('copy');
-//         document.body.removeChild(tempTextArea);
-//         alert('Text copied to clipboard');
-//     });
-// });
-        </script>
-        
-        
-        
-    <style>
-        body {
-            font-family: 'Open Sans', sans-serif;
-        }
-        /* .tab-button.active {
-            background-color: #F7F7F7; 
-            color: #1434CB; 
-            border-color: #1434CB;
-        }
-        .tab-button {
-            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
-        } */
-        .btn-visa-blue {
-            background-color: #1434CB; /* Visa blue */
-            color: white;
-        }
-        .border-visa-blue {
-            border-color: #1434CB; /* Visa blue */
-        }
-        .content-display {
-        min-height: 8rem; /* Default height */
-        overflow: auto; /* Enables scrollbar if content overflows */
-        border: 1px solid #1434CB; /* Border to match your design */
-        padding: 1rem; /* Padding for aesthetic spacing */
-        margin-bottom: 1rem; /* Margin for spacing between boxes */
-        background-color: white; /* Background color */
-        border-radius: .5rem; /* Rounded corners to match your design */
-        }
-        /* .tab-button.active {
-        background-color: #4F46E5; 
-        color: white;
-        border-color: #4F46E5; 
-        font-weight: 600; 
-    } */
-
-    /* Container for both tabs and content */
-.tabs-and-content-container {
-    display: flex;
-    flex-direction: row; /* Align side by side */
-}
-
-/* Container for just the tabs to stack them vertically */
-.tabs-container {
-    display: flex;
-    flex-direction: column; /* Stack vertically */
-    margin-right: 1rem; /* Add some space between tabs and content */
-}
-
-/* Styling for the individual tabs */
-.tab-button {
-    background-color: #F7F7F7; /* light gray */
-    color: #1434CB; /* Your primary color */
-    border: 2px solid #1434CB; /* Your primary color */
-    padding: 0.5rem 1rem;
-    margin-bottom: 0.25rem; /* Space between tabs */
-    cursor: pointer; /* Indicates the tab is clickable */
-    text-align: left; /* Align text to the left */
-    border-radius: 0.5rem; /* Rounded corners for the tabs */
-    width: 100%; /* Full width of the container */
-}
-
-/* Active state for tabs */
-.tab-button.active {
-    background-color: #FCC015; /* Your primary color */
-    color: white; /* White text for the active tab */
-}
-
-/* Styling for the content area next to the tabs */
-.content-area {
-    flex-grow: 1; /* Take up remaining space */
-    border: 2px solid #1434CB; /* Your primary color */
-    padding: 1rem;
-    border-radius: 0.5rem; /* Rounded corners for the content box */
-}
-
-
-    </style>
-</head>
-
-<body class="flex flex-col h-full bg-gray-50 text-gray-800">
-    <div class="flex-grow">
-    <header class="bg-[#FCC015] text-white sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center p-4">
-            <h1 class="text-2xl font-bold" style="color: #1434CB;">SMART TRAINING 2.0</h1>
-            <!-- Logo on the rightmost side -->
-            <div>
-                <img src="https://cdn.visa.com/v2/assets/images/logos/visa/blue/logo.png" alt="Visa Logo" class="h-8"> <!-- Adjust the height as needed -->
-            </div>
-        </div>
-    </header>
     
-    <div class="container mx-auto p-6">
-       
+    summary = AskGPT(summary_prompt, content)
+    emit('content_update', {'type': 'Summary', 'content': summary})
+    print("Su1111111111111111111111111mmary: ", summary)
 
-        <div class="mb-4">
-            <input type="text" name ="title" placeholder="Working TITLE" class="w-full p-2 border border-visa-blue rounded mb-3">
-            <div class="flex space-x-2 mb-3">
-                <select name="audience" class="p-2 border border-visa-blue rounded">
-                    <option selected disabled>Select Audience</option>
-                    <option>Developer</option>
-                    <option>Product Manager</option>
-                    <option>Executives</option>
-                    <option>Sales</option>
-
-
-
-                </select>
-                <select name="category" class="p-2 border border-visa-blue rounded">
-                    <option selected disabled>Select Category</option>
-                    <option>Training</option>
-                    <option>Case Study</option>
-                    <option>Onboarding</option>
-                    <option>Standard Procedures</option>
-                    <option>Code Walkthrough</option>
-                    <option>How-To Videos</option>
-                    <option>Cheat Sheets</option>
-                    <option>Masterclass</option>
-                    <option>Story</option>
-
-                </select>
-                <input name="video-length" type="number" placeholder="Video Length" class="w-full p-2 border border-visa-blue rounded" min="2" max="8">
-            </div>
-            <input type="file" name="files" multiple class="mb-3">
-
-            <textarea name="content" placeholder="Enter your content here" class="w-full p-2 border border-visa-blue rounded mb-3"></textarea>
-            <div class="flex justify-center mt-3">
-                <button id="generate-button" class="p-2 btn-visa-blue rounded">Generate!</button>
-            </div>
-        </div>
-
-<!-- Initially hidden tabs -->
-<!-- <div class="mb-4 tabs-container" style="display: none;">
-    <div class="flex space-x-2 mb-3">
-        <button class="tab-button p-2 border border-visa-blue rounded" data-content="summary-content">Summary</button>
-        <button class="tab-button p-2 border border-visa-blue rounded" data-content="plan-content">Plan</button>
-        <button class="tab-button p-2 border border-visa-blue rounded" data-content="script-content">Script</button>
-        <button class="tab-button p-2 border border-visa-blue rounded" data-content="screenplay-content">Screenplay</button>
-    </div>
-    <div id="summary-content" class="content-display p-2 border border-visa-blue rounded mb-3 bg-white" style="display: none;">Summary box</div>
-    <div id="plan-content" class="content-display p-2 border border-visa-blue rounded mb-3 bg-white" style="display: none;">Plan box</div>
-    <div id="script-content" class="content-display p-2 border border-visa-blue rounded mb-3 bg-white" style="display: none;">Script box</div>
-    <div id="screenplay-content" class="content-display p-2 border border-visa-blue rounded mb-3 bg-white" style="display: none;">Director box</div>
-</div>
-
-<div class="flex space-x-2 downloads-container" style="display: none;">
-    <button class="p-2 btn-visa-blue rounded">Download Screenplay</button>
-    <button class="p-2 btn-visa-blue rounded">Download Script</button>
-</div> -->
-<div class="tabs-and-content-container">
-    <div class="tabs-container" style="display: none;">
-        <button class="tab-button" data-content="summary-content">Summary</button>
-        <button class="tab-button" data-content="plan-content">Plan</button>
-        <button class="tab-button" data-content="script-content">Script</button>
-        <button class="tab-button" data-content="screenplay-content">Screenplay</button>
-    </div>
+    plan_prompt = f""" # MISSION
+You are a Sparse Priming Representation (SPR) decompressor. You will be given an SPR compressed {summary} content which has been written in such a way that makes sense to you.
+# METHODOLOGY
+Use the input given to you to fully understand and articulate the concept as a plan for the script for a {videoLength} minute long video. Topic: {title}. Audience of the video: {audience}. Category: {category} which should be written with these details {category_info}
+provided Instructions:
+Section Breakdown: Divide the video into sections, providing a timestamp for each section. Ensure that the total duration aligns with the {videoLength} minute length of the video.
+Content Details: For each section, specify the subtopics or key points that should be discussed. This should align with the topic and the associative nature of the topic.
+Impute Missing Information: Use inference and reasoning to fill in any gaps in information, ensuring a comprehensive coverage of the topic.
+Focus on Plan, Not Script: The output should be a structured plan, not a full script. It should outline what will be discussed in each section, without writing the actual dialogue or narration.
+Your plan should serve as a blueprint for creating an informative and engaging video on the complexities and capabilities of content."
+"""
     
-    <div class="content-area">
-        <div id="summary-content" style="display: none;">Summary appears here
-        <!-- <button class="copy-button">Copy</button> -->
-        </div>
-        <div id="plan-content" style="display: none;">Plan Summary appears here
-        <!-- <button class="copy-button">Copy</button> -->
-        </div>
-        <div id="script-content" style="display: none;">Script Summary appears here
-            <!-- <button class="copy-button">Copy</button> -->
-        </div>
-        <div id="screenplay-content" style="display: none;">Screenplay Summary appears here
-            <!-- <button class="copy-button">Copy</button> -->
-        </div>
-    </div>
-</div>
 
-<br>
-<br>
-<div class="flex space-x-2 downloads-container" style="display: none;">
-    <button class="p-2 btn-visa-blue rounded">Download Screenplay</button>
-    <button id="download-button" class="p-2 btn-visa-blue rounded">Download Script</button>
-</div> 
-        </div>
-    </div>
-</div>
+    video_plan = AskGPT(plan_prompt, content)
+    emit('content_update', {'type': 'Plan', 'content': video_plan})
+    print("pla11111111111111n_prompt: ", video_plan)
 
-    <footer class="bg-gray-100 mt-auto">
-        <div class="container mx-auto p-6 text-gray-800">
-            <div class="text-center text-sm mt-4">
-                © 2024 Smart Training 2.0. All rights reserved.
-            </div>
-        </div>
-    </footer>
-</body>
+    script_prompt = f"""
+You are designed to write scripts for {videoLength} minute corporate training video for the category {category}. Audience of the video: {audience}. Users will provide a detailed plan {video_plan} with timestamps and a source text{content}, which is typically extensive. as a Script Generator, you will thoroughly scan the source text to align content with each section of the video plan.
+For each minute of the video, the script should contain around 150 words, within a tolerance range of 140-160 words. This is essential for maintaining the pacing and flow of the video.
+SPRScriptGenerator will prioritize technical accuracy and relevance, catering to a corporate employee audience. It will avoid informal language, humor, and personal opinions, maintaining a professional tone throughout. If encountering ambiguous requests, SPRScriptGenerator will independently seek information online to fill knowledge gaps, rather than asking the user for clarifications.
+The output will be clear, concise, and strictly relevant to the video plan's topics, ensuring the script is content-rich and effectively communicates the intended message.
+Please follow these instructions:
+Content Extraction: Carefully read and extract relevant information from the source file for each section of the video plan.
+Incorporate Examples: Wherever possible, include examples from the source file to illustrate points more clearly.
+Word Count Adherence: Ensure each minute of the script has the required word count. If the initial draft falls short, please revise it to meet the 140-160 words per minute range.
+Clarity and Relevance: While focusing on the word count, also ensure the script remains clear, concise, and closely related to the video plan's topics.
+This approach will guarantee the script is rich in content, adheres to the specified word count, and effectively communicates the intended message.
+    """
 
-<!-- </body> -->
-</html>
+    script = AskGPT(script_prompt, content)
+    emit('content_update', {'type': 'Script', 'content': script})
+    print("s11111111111111111111111111111ript_prompt: ", script)
+
+    # emit('content_update', {
+    #     'summary': summary,
+    #     'plan': video_plan,
+    #     'script': script,
+    #     'screenplay': 'Placeholder screenplay content'  # Assuming this needs a similar implementation
+    # })
+
+@app.route('/upload_files', methods=['POST'])
+def upload_files():
+    uploaded_files = request.files.getlist("files")
+    content = ""
+    
+    for file in uploaded_files:
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(r'L:\VSCodeZone\AEAE\STTT\uploads', filename)
+        file.save(file_path)
+        
+        # Extract text from the file based on its extension
+        if filename.endswith('.txt'):
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content += f.read() + "\n"
+        elif filename.endswith('.docx'):
+            doc = docx.Document(file_path)
+            for para in doc.paragraphs:
+                content += para.text + "\n"
+        elif filename.endswith('.pdf'):
+            reader = PyPDF2.PdfFileReader(file_path)
+            for page in range(reader.numPages):
+                content += reader.getPage(page).extractText() + "\n"
+        
+        # Remove the file after processing if desired
+        # os.remove(file_path)
+    
+    return jsonify({'content': content})
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True)
