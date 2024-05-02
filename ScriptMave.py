@@ -97,9 +97,6 @@ st.sidebar.markdown('---')  # Horizontal line for separation
 st.sidebar.markdown("### Socials:")
 st.sidebar.markdown("""
 <div style="display: flex; flex-direction: row; align-items: center;">
-    # <a href="https://github.com/pathakmukul" target="_blank" style="margin-right: 20px; text-decoration: none;">
-    #     <i class="fab fa-github fa-2x" style="color: white;"></i>
-    # </a>
     <a href="https://twitter.com/milindp_" target="_blank" style="margin-right: 20px; text-decoration: none;">
         <i class="fab fa-twitter fa-2x" style="color: inherit;"></i>
     </a>
@@ -107,9 +104,6 @@ st.sidebar.markdown("""
         <i class="fab fa-twitter fa-2x" style="color: inherit;"></i>
     </a>
 
-    # <a href="https://huggingface.co/broductmanager" target="_blank" style="font-size: 28px; text-decoration: none; color: inherit;">
-    #     🤗
-    # </a>
 </div>
 """, unsafe_allow_html=True)
 
