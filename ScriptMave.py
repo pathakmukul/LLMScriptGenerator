@@ -146,7 +146,7 @@ if st.button("Generate Plan"):
     
     
 # Add footer
-st.markdown(
-    "<div style='text-align: center;'>Made with <span style='color: red;'>&hearts;</span> by Mukul.</div>",
-    unsafe_allow_html=True,
-)
+# st.markdown(
+#     "<div style='text-align: center;'>Made with <span style='color: red;'>&hearts;</span> by Mukul.</div>",
+#     unsafe_allow_html=True,
+# )
