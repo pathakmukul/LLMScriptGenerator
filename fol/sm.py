@@ -10,12 +10,10 @@ from promptLib import get_prompts
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-
-
-
 @app.route('/')
 def index():
     return render_template('Aindex.html')
+
 prompts = get_prompts()
 
 @socketio.on('generate_script')
@@ -29,12 +27,6 @@ def handle_generate_script(data):
     category_details = {
         'Case Study': 'Purpose: Generate a comprehensive case study on a specified topic. Structure: Introduction, background, solutions, results, key takeaways. Data: Include data points, graphs, citations. Process: Outline, contextualize, detail issues, explain solutions, present results, summarize takeaways, add citations.',
         'Onboarding': 'Purpose: Create an onboarding guide for a specific role or department. Elements: Company culture, job functions, key contacts, tools, platforms. Process: Structure guide, introduce company, enumerate job functions, list contacts, discuss tools.',
-        'Standard Procedures': 'Purpose: Outline standard procedures for a specific task or process. Content: Objectives, prerequisites, step-by-step actions, warnings, precautions. Process: List objectives, prerequisites, detail steps, insert warnings.',
-        'Code Walkthrough': 'Purpose: Conduct a code walkthrough for a specific programming task or project. Content: Code snippets, explanations, best practices. Process: Overview of project, include code snippets, explain functionality, discuss best practices.',
-        'How-To Videos': 'Purpose: Script a how-to video for a particular task, skill, or process. Structure: Introduction, materials, step-by-step guide, key takeaways. Process: Write introduction, list materials, create narrative, conclude with takeaways.',
-        'Cheat Sheets': 'Purpose: Create a cheat sheet for a skill, tool, or process. Content: Tips, shortcuts, essential commands. Process: Compile tips and shortcuts, add commands, organize for quick reference.',
-        'Masterclass': 'Purpose: Structure a masterclass on a specific topic or area of expertise. Elements: Learning objectives, in-depth modules, practical exercises, further learning resources. Process: Outline objectives, develop modules, include exercises, list additional resources.',
-        'Story': 'Purpose: Write a compelling story. Elements: Engaging plot, character development, setting, climax, resolution. Process: Establish setting, introduce characters, develop plot, build to climax, resolve story.'
     }
     category_info = category_details.get(category, "")
 
@@ -50,15 +42,12 @@ def handle_generate_script(data):
     script = AskGPT(script_prompt).replace("\n", "<br>")
     emit('content_update', {'type': 'Script', 'content': script})
 
-
 @socketio.on('generate_document')
 def handle_generate_document(data):
     title = data['title']
     audience = data['audience']
     category = data['category']
     videoLength = data['video_length']
-
-# call the prompts from the promptLib.py file for Doc_introduction_prompt, Doc_overview_prompt, Doc_content_prompt, and Doc_summary_prompt
 
     introduction_prompt = prompts['Doc_introduction_prompt'].format(title=title, audience=audience, category=category, videoLength=videoLength)
     introduction = AskGPT(introduction_prompt).replace("\n", "<br>")
@@ -76,13 +65,11 @@ def handle_generate_document(data):
     document_summary = AskGPT(summary_prompt).replace("\n", "<br>")
     emit('content_update', {'type': 'Summary', 'content': document_summary})
 
-    
-
 @app.route('/upload_files', methods=['POST'])
 def upload_files():
     uploaded_files = request.files.getlist("files")
     content = ""
-    
+
     for file in uploaded_files:
         filename = secure_filename(file.filename)
         file_path = os.path.join('uploads', filename)
@@ -90,115 +77,31 @@ def upload_files():
         
         if filename.endswith('.txt'):
             with open(file_path, 'r', encoding='utf-8') as f:
-                content += f.read() + "\n"
+                content += f.read() + "\n\n"  # Ensure separation between files
         elif filename.endswith('.docx'):
             doc = Document(file_path)
             for para in doc.paragraphs:
-                content += para.text + "\n"
+                content += para.text + "\n\n"  # Ensure separation between files
         elif filename.endswith('.pdf'):
             reader = PyPDF2.PdfFileReader(file_path)
             for page in range(reader.numPages):
-                content += reader.getPage(page).extractText() + "\n"
-    
+                content += reader.getPage(page).extractText() + "\n\n"  # Ensure separation between files
+
+        os.remove(file_path)  # Clean up the file after reading
+
     return jsonify({'content': content})
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
 
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-# PromptLibrary.py
-
-def get_prompts():
-    return {
-        'SPR_Prompt': """
-            You are a Sparse Priming Representation (SPR) writer. You will be given information by the USER here: {content}, which you are to render as an SPR.
-            Create a Sparse Primitive Representation of this technical document, which is a code walkthrough. Focus on summarizing the key functions of each code block, explaining the main algorithms, and their practical applications. Aim for a concise yet comprehensive overview that captures the essence of the document's coding content, suitable for readers with basic coding knowledge.
-            If not a coding or technical topic, render the input as a distilled list of succinct statements, assertions, associations, concepts, analogies, and metaphors. The idea is to capture as much, conceptually, as possible but with as few words as possible. Write it in a way that makes sense to you, as the future audience will be another language model, not a human. Use complete sentences.
-            In output, only provide the SPR output.
-        """,
-        'Sc_plan_prompt': """
-            You are a Sparse Priming Representation (SPR) decompressor. You will be given an SPR compressed {summary} content which has been written in such a way that makes sense to you.
-            Use the input given to you to fully understand and articulate the concept as a plan for the script for a {videoLength} minute long video. Topic: {title}. Audience of the video: {audience}. Category: {category} which should be written with these details {category_info}
-            Section Breakdown: Divide the video into sections, providing a timestamp for each section. Ensure that the total duration aligns with the {videoLength} minute length of the video.
-            Content Details: For each section, specify the subtopics or key points that should be discussed. This should align with the topic and the associative nature of the topic.
-            Impute Missing Information: Use inference and reasoning to fill in any gaps in information, ensuring a comprehensive coverage of the topic.
-            Focus on Plan, Not Script: The output should be a structured plan, not a full script. It should outline what will be discussed in each section, without writing the actual dialogue or narration.
-            Your plan should serve as a blueprint for creating an informative and engaging video on the complexities and capabilities of content.
-        """,
-        'script_prompt': """
-            You are designed to write scripts for a {videoLength} minute corporate training video for the category {category}. Audience of the video: {audience}. Users will provide a detailed plan {video_plan} with timestamps and a source text {content}, which is typically extensive. As a Script Generator, you will thoroughly scan the source text to align content with each section of the video plan.
-            For each minute of the video, the script should contain around 150 words, within a tolerance range of 140-160 words. This is essential for maintaining the pacing and flow of the video.
-            SPRScriptGenerator will prioritize technical accuracy and relevance, catering to a corporate employee audience. It will avoid informal language, humor, and personal opinions, maintaining a professional tone throughout. If encountering ambiguous requests, SPRScriptGenerator will independently seek information online to fill knowledge gaps, rather than asking the user for clarifications.
-            The output will be clear, concise, and strictly relevant to the video plan's topics, ensuring the script is content-rich and effectively communicates the intended message.
-            Please follow these instructions:
-            Content Extraction: Carefully read and extract relevant information from the source file for each section of the video plan.
-            Incorporate Examples: Wherever possible, include examples from the source file to illustrate points more clearly.
-            Word Count Adherence: Ensure each minute of the script has the required word count. If the initial draft falls short, please revise it to meet the 140-160 words per minute range.
-            Clarity and Relevance: While focusing on the word count, also ensure the script remains clear, concise, and closely related to the video plan's topics.
-            This approach will guarantee the script is rich in content, adheres to the specified word count, and effectively communicates the intended message.
-        """,     
-        'Doc_introduction_prompt': """
-                Generate an introduction for a document titled '{title}', targeted at {audience}. The category is '{category}' and the document should align with a video length of {videoLength} minutes. Provide an engaging and informative introduction that sets the stage for the rest of the content.
-            """,
-        'Doc_overview_prompt':"""
-                Provide an overview for a document titled '{title}', targeted at {audience} in the '{category}' category. The document should complement a video with a length of {videoLength} minutes. The overview should summarize the main points and provide a clear outline of what the document will cover.
-            """,
-        'Doc_content_prompt': """
-                Generate the main content for a document titled '{title}', intended for {audience} in the '{category}' category. The document supports a video of {videoLength} minutes. Detail the core topics and ensure comprehensive coverage of the subject matter.
-            """,
-        'Doc_summary_prompt': """
-                Create a summary for a document titled '{title}', aimed at {audience} within the '{category}' category. The summary should encapsulate the key points of the document, aligning with a video duration of {videoLength} minutes.
-            """
-
-    }
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-import openai
-from dotenv import load_dotenv
-import os
-from flask import Flask
-
-load_dotenv()
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-app.config['SECRET_KEY'] = 'your_secret_key_here'
-
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-
-
-
-
-def AskGPT(prompt):
-    openai.api_key = OPENAI_API_KEY
-
-    try:
-        prompt = prompt
-        
-        response = openai.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-        )
-        GPT_op = response.choices[0].message.content.strip()
-        print("GPT OP: ", GPT_op)
-        return GPT_op
-    except Exception as e:
-        print(f"An error occurred during processing: {e}")
-        return None
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
+    
+# ???????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????????
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Training 23.0</title>
+    <title>Smart Training 2323.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
@@ -255,100 +158,117 @@ def AskGPT(prompt):
                 tabs[0].click(); // Click the first tab to show its content
             }
 
-            
-        function otherFormData() {
-            return {
-                title: title.value,
-                audience: audience.value,
-                category: category.value,
-                video_length: videoLength.value
-            };
-        }
-
-        var socket = io();
-
-        button.addEventListener('click', function() {
-            var formData = new FormData();
-            if (fileInput.files.length > 0) {
-                for (let i = 0; i < fileInput.files.length; i++) {
-                    formData.append('files', fileInput.files[i]);
-                }
-                console.log("Files appended to FormData:", fileInput.files);
-                fetch('/upload_files', {
-                    method: 'POST',
-                    body: formData,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Server response:", data);
-                    socket.emit('generate_script', { content: data.content, ...otherFormData() });
-                })
-                .catch(error => console.error('Error:', error));
-            } else {
-                console.log("No files uploaded, using text content");
-                socket.emit('generate_script', { content: content.value, ...otherFormData() });
+            function otherFormData() {
+                return {
+                    title: title.value,
+                    audience: audience.value,
+                    category: category.value,
+                    video_length: videoLength.value
+                };
             }
-            updateTabLabels('script');
-        });
 
-        docButton.addEventListener('click', function() {
-            socket.emit('generate_document', otherFormData());
-            updateTabLabels('document');
-        });
+            var socket = io();
 
-        socket.on('content_update', function(data) {
-            console.log("Content update received:", data);
-            switch (data.type) {
-                case 'Summary':
-                    document.getElementById('summary-content').innerHTML = data.content;
-                    document.getElementById('summary-content').style.display = 'block';
-                    break;
-                case 'Plan':
-                    document.getElementById('plan-content').innerHTML = data.content;
-                    document.getElementById('plan-content').style.display = 'block';
-                    break;
-                case 'Script':
-                    document.getElementById('script-content').innerHTML = data.content;
-                    document.getElementById('script-content').style.display = 'block';
-                    break;
-                case 'Screenplay':
-                    document.getElementById('screenplay-content').innerHTML = data.content;
-                    document.getElementById('screenplay-content').style.display = 'block';
-                    break;
-                case 'Introduction':
-                    document.getElementById('introduction-content').innerHTML = data.content;
-                    document.getElementById('introduction-content').style.display = 'block';
-                    break;
-                case 'Overview':
-                    document.getElementById('overview-content').innerHTML = data.content;
-                    document.getElementById('overview-content').style.display = 'block';
-                    break;
-                case 'Content':
-                    document.getElementById('content-content').innerHTML = data.content;
-                    document.getElementById('content-content').style.display = 'block';
-                    break;
-            }
-            document.querySelector('.tabs-container').style.display = 'flex';
-            document.querySelector('.downloads-container').style.display = 'flex';
-        });
-
-        document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', function() {
-                document.querySelectorAll('.tab-button').forEach(btn => {
-                    btn.classList.remove('active');
-                    const contentId = btn.getAttribute('data-content');
-                    document.getElementById(contentId).style.display = 'none';
-                });
-                button.classList.add('active');
-                const contentToShowId = button.getAttribute('data-content');
-                document.getElementById(contentToShowId).style.display = 'block';
+                var formData = new FormData();
+                var fileContents = [];
+
+                if (fileInput.files.length > 0) {
+                    var filePromises = [];
+
+                    for (let i = 0; i < fileInput.files.length; i++) {
+                        formData.append('files', fileInput.files[i]);
+                        filePromises.push(readFile(fileInput.files[i]));
+                    }
+
+                    console.log("Files appended to FormData:", fileInput.files);
+
+                    Promise.all(filePromises).then(contents => {
+                        const combinedContent = contents.join("\n\n");
+                        console.log("Combined file contents:", combinedContent);
+
+                        fetch('/upload_files', {
+                            method: 'POST',
+                            body: formData,
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            socket.emit('generate_script', { content: combinedContent, ...otherFormData() });
+                        })
+                        .catch(error => console.error('Error:', error));
+                    });
+                } else {
+                    console.log("No files uploaded, using text content");
+                    socket.emit('generate_script', { content: content.value, ...otherFormData() });
+                }
+                updateTabLabels('script');
             });
+
+            docButton.addEventListener('click', function() {
+                socket.emit('generate_document', otherFormData());
+                updateTabLabels('document');
+            });
+
+            socket.on('content_update', function(data) {
+                console.log("Content update received:", data);
+                switch (data.type) {
+                    case 'Summary':
+                        document.getElementById('summary-content').innerHTML = data.content;
+                        document.getElementById('summary-content').style.display = 'block';
+                        break;
+                    case 'Plan':
+                        document.getElementById('plan-content').innerHTML = data.content;
+                        document.getElementById('plan-content').style.display = 'block';
+                        break;
+                    case 'Script':
+                        document.getElementById('script-content').innerHTML = data.content;
+                        document.getElementById('script-content').style.display = 'block';
+                        break;
+                    case 'Screenplay':
+                        document.getElementById('screenplay-content').innerHTML = data.content;
+                        document.getElementById('screenplay-content').style.display = 'block';
+                        break;
+                    case 'Introduction':
+                        document.getElementById('introduction-content').innerHTML = data.content;
+                        document.getElementById('introduction-content').style.display = 'block';
+                        break;
+                    case 'Overview':
+                        document.getElementById('overview-content').innerHTML = data.content;
+                        document.getElementById('overview-content').style.display = 'block';
+                        break;
+                    case 'Content':
+                        document.getElementById('content-content').innerHTML = data.content;
+                        document.getElementById('content-content').style.display = 'block';
+                        break;
+                }
+                document.querySelector('.tabs-container').style.display = 'flex';
+                document.querySelector('.downloads-container').style.display = 'flex';
+            });
+
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.tab-button').forEach(btn => {
+                        btn.classList.remove('active');
+                        const contentId = btn.getAttribute('data-content');
+                        document.getElementById(contentId).style.display = 'none';
+                    });
+                    button.classList.add('active');
+                    const contentToShowId = button.getAttribute('data-content');
+                    document.getElementById(contentToShowId).style.display = 'block';
+                });
+            });
+
+            document.querySelector('.tab-button').click();
+
+            function readFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => resolve(event.target.result);
+                    reader.onerror = (error) => reject(error);
+                    reader.readAsText(file);
+                });
+            }
         });
-
-        document.querySelector('.tab-button').click();
-    });
-
- 
     </script>
     <style>
         body {
@@ -396,7 +316,30 @@ def AskGPT(prompt):
         }
         .content-area {
             flex-grow: 1;
-            border: 2px solid #1434CB;
+            padding: 0.5rem 1rem;
+            background-color: white;
+            border: 1px solid #1434CB;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .downloads-container {
+            justify-content: center;
+        }
+        textarea {
+            min-height: 100px;
+            max-height: 200px;
+            resize: vertical;
+        }
+        .content-display {
+            min-height: 8rem;
+            overflow: auto;
+            border: 1px solid #1434CB;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .screenplay-content {
+            display: none;
+            border: 1px solid #1434CB;
             padding: 1rem;
             border-radius: 0.5rem;
         }
@@ -478,3 +421,5 @@ def AskGPT(prompt):
     </footer>
 </body>
 </html>
+
+
