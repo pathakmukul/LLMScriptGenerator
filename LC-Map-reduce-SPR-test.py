@@ -2,12 +2,10 @@ import langchain
 from langchain.chains import MapReduceDocumentsChain, ReduceDocumentsChain
 from langchain_text_splitters import CharacterTextSplitter
 
-# Define the SPR (Summarization by Prompting with Retrieval) method
 def spr_summarize(text):
   # Split the text into chunks
   chunks = CharacterTextSplitter().split_text(text, chunk_size=1000)
 
-  # Create a MapReduceDocumentsChain to summarize each chunk
   map_reduce_chain = MapReduceDocumentsChain(
       map_chain=langchain.chains.summarize.load_summarize_chain(
           llm=langchain_openai.ChatOpenAI(temperature=0),
@@ -19,8 +17,6 @@ def spr_summarize(text):
       ),
   )
 
-  # Run the MapReduceDocumentsChain to get a summary of each chunk
   summaries = map_reduce_chain.run(chunks)
 
-  # Join the summaries into a single cohesive summary
   return "\n".join(summaries)
