@@ -50,9 +50,6 @@ def generate_detailed_content(llm, content_input, video_length, video_style, ton
 
 
 
-# ... Your existing functions
-
-# Streamlit UI
 
 # Streamlit UI
 st.set_page_config(page_title="ScriptMaven📜🧠", page_icon=":robot:")
@@ -90,7 +87,6 @@ st.markdown("""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     """, unsafe_allow_html=True)
 
-# ... Existing code for sidebar and Font Awesome inclusion
 
 # Add social media icons at the bottom
 st.sidebar.markdown('---')  # Horizontal line for separation
@@ -107,8 +103,6 @@ st.sidebar.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# f
-# Create columns for the API Key input and the Get Key link
 
 openai_api_key = st.text_input("OpenAI API Key", placeholder="Ex: sk-2twmA8tfCb8un4...")
 # Create 2x2 grid for the select boxes
@@ -125,8 +119,6 @@ with col2:
 content_input = st.text_area("Content Input", placeholder="Your content deserves to be here 👑 ")
 
 
-# Generate plan button
-# ...
 # Generate Content Plan Button
 if st.button("Generate Plan"):
     llm = load_LLM(openai_api_key=openai_api_key)
