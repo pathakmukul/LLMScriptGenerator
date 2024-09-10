@@ -4,7 +4,7 @@
 
 ![image](https://github.com/user-attachments/assets/39cf0d1f-311f-404e-85cf-7fd54d2f9b16)
 
-
+Access the tool at: https://mukulpathak.com/scriptmaven.html
 ScriptMaven is an intelligent web application designed to streamline the creation of educational video scripts. Leveraging advanced language models, it automates the process of content planning and scriptwriting, making it a valuable tool for educators, content creators, and corporate trainers.
 
 #### Key Features:
