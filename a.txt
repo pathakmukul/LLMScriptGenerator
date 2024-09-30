@@ -1,0 +1,171 @@
+import streamlit as st
+from streamlit_flow import streamlit_flow
+from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
+import math
+
+# Adjusted layout logic remains the same
+def create_circular_layout(center_node, other_nodes, radius=450):  # Increased radius for more space
+    layout = {center_node: (0, 0)}
+    num_nodes = len(other_nodes)
+    start_angle = -math.pi / 2  # Start at 12 o'clock position
+    for i, node in enumerate(other_nodes):
+        angle = start_angle + (2 * math.pi * i / (num_nodes))  # More even spacing
+        x = radius * math.cos(angle)
+        y = radius * math.sin(angle)
+        layout[node] = (x, y)
+    return layout
+
+class LayoutWrapper:
+    def __init__(self, layout):
+        self.layout = layout
+
+    def __to_dict__(self):
+        return self.layout
+
+def show_node_details(node_id):
+    details = {
+        "data_scientist": "<h3>Data Scientist (DS)</h3><p>Understands business objectives, model purpose, and data features.</p>",
+        "step_1": "<h3>Platform: MLP</h3><ul><li>JupyterLab Notebook is utilized to access the ANA cluster to start the data preparation for model training by accessing a Hadoop, Spark or Dask environment.</li><li>A Custom Python environment can be created to install packages and tools for use cases.</li></ul>",
+        "step_2": "<h3>Platform: MLP</h3><ul><li>DS uses JupyterLab Notebook to iterate data readiness by performing visualization using python libraries, heat map, bar graphs, and charts to better understand raw data.</li></ul>",
+        "step_3": "<h3>Platform: MLP</h3><ul><li>DS uses MLP AI Platform (Feature Engineering Service 2.0) to experiment with and select the model type and training dataset to define and materialize features to acquire the desired results.</li></ul>",
+        "step_4": "<h3>Platform: MLP</h3><ul><li>JupyterLab Notebook is used to train the selected model with frameworks such as TensorFlow, Keras, PyTorch, Scikit-learn, XGBoost, or LightGBM.</li><li>Ray Framework can be used to parallelize computations for distributed training across CPUs/GPUs/nodes.</li></ul>",
+        "step_5": "<h3>Platform: MLP</h3><ul><li>GridSearchCV library and Optuna are used to perform hyperparameter tuning and evaluate model performance across model iterations.</li></ul>",
+        "step_6": "<h3>Platform: MLP</h3><ul><li>After the model has been trained and proved feasible, it is packaged into a self-contained unit known as an artifact. MLFlow to be deployed to ML OPS from experiment to production.</li></ul>",
+        "step_7": "<h3>Platform: AI Workbench</h3><ul><li>Model is onboarded on AIW for feature experimentation, model tuning, explainability (XAI), model simulation, and model calibration.</li><li>An external client view is available for model communication and socialization.</li></ul>",
+        "step_8": "<h3>Platform: AIP</h3><ul><li>When ML OPS receives the MLPak to be onboarded to AIP, a sanity check in AIA is performed to ensure that all models and features are being calculated properly.</li><li>In addition, there is a certification process in PSE environment to ensure model scores and features in PSE, validating the model with production data.</li></ul>",
+        "step_9": "<h3>Platform: AIP</h3><ul><li>Model is deployed on AIP for inference by client.</li><li>Models demanding high inference capacity are deployed in OCC/OCE (VIP, WS) environment instead in P725.</li><li>Non-VIP real-time models are deployed to OCC/OCE AIP Common (Non-P725).</li></ul>",
+        "step_10": "<h3>Platform: AIP</h3><ul><li>Prometheus and Grafana are used for platform monitoring and availability.</li><li>Elastic dashboards are used by PSE and DS stakeholders to monitor model performance, data drift, and feature match rate, and score distribution.</li><li>AIP PERF team provides 24/7 monitoring of P1 system and model alerts.</li></ul>",
+        "step_11": "<h3>Platform: AI Workbench</h3><ul><li>Any required post-production model performance validation and A/B testing.</li></ul>"
+    }
+    return details.get(node_id, "No details available.")
+
+def main():
+    st.set_page_config(layout="wide")  # Use full screen width
+
+    st.title("AI/ML Platform for Data Scientists")
+    st.subheader("Enabling Data Scientists to Build Efficient Models")
+
+    center_node = "data_scientist"
+    other_nodes = [f"step_{i}" for i in range(1, 12)]
+    layout = create_circular_layout(center_node, other_nodes, radius=450)  # More spaced layout
+    layout = LayoutWrapper(layout)  # Wrap the layout in the LayoutWrapper class
+
+    # Updated node content with header size control and color assignment
+    nodes = [
+        StreamlitFlowNode("data_scientist", layout.layout["data_scientist"], 
+                          {'content': """<h4>Data Scientist (DS)</h4>
+                          <h6>Understands business objectives, model purpose, and data features.</h6>""", 
+                          'default': 'top', 'width': 150}),
+        
+        # Assign red to MLP nodes
+        StreamlitFlowNode("step_1", layout.layout["step_1"], 
+                          {'content': """<h4 style='color:red;'>1. Platform: MLP</h4>
+                          <h6>Data preparation using Hadoop, Spark, or Dask.</h6>"""}, 
+                          'default', 'top', width=200),
+        StreamlitFlowNode("step_2", layout.layout["step_2"], 
+                          {'content': """<h4 style='color:red;'>2. Platform: MLP</h4>
+                          <h6>Data visualization in JupyterLab Notebook.</h6>"""}, 
+                          'default', 'right', width=200),
+        StreamlitFlowNode("step_3", layout.layout["step_3"], 
+                          {'content': """<h4 style='color:red;'>3. Platform: MLP</h4>
+                          <h6>Feature engineering and model selection.</h6>"""}, 
+                          'default', 'right', width=200),
+        StreamlitFlowNode("step_4", layout.layout["step_4"], 
+                          {'content': """<h4 style='color:red;'>4. Platform: MLP</h4>
+                          <h6>Model training with frameworks.</h6>"""}, 
+                          'default', 'right', width=200),
+        StreamlitFlowNode("step_5", layout.layout["step_5"], 
+                          {'content': """<h4 style='color:red;'>5. Platform: MLP</h4>
+                          <h6>Hyperparameter tuning.</h6>"""}, 
+                          'default', 'bottom', width=200),
+        StreamlitFlowNode("step_6", layout.layout["step_6"], 
+                          {'content': """<h4 style='color:red;'>6. Platform: MLP</h4>
+                          <h6>Model packaging using MLFlow.</h6>"""}, 
+                          'default', 'bottom', width=200),
+        
+        # Assign blue to AI Workbench (AIW) nodes
+        StreamlitFlowNode("step_7", layout.layout["step_7"], 
+                          {'content': """<h4 style='color:blue;'>7. Platform: AI Workbench</h4>
+                            <h6>Model experimentation and tuning.</h6>"""}, 
+                          'default', 'bottom', width=200),
+        StreamlitFlowNode("step_11", layout.layout["step_11"], 
+                          {'content': """<h4 style='color:blue;'>11. Platform: AI Workbench</h4>
+                          <h6>Post-production validation and A/B testing.</h6>"""}, 
+                          'default', 'top', width=200),
+        
+        # Assign light yellow shade to AIP nodes
+        StreamlitFlowNode("step_8", layout.layout["step_8"], 
+                          {'content': """<h4 style='color:#FFD700;'>8. Platform: AIP</h4>
+                          <h6>ML OPS sanity check.</h6>"""}, 
+                          'default', 'left', width=200),
+        StreamlitFlowNode("step_9", layout.layout["step_9"], 
+                          {'content': """<h4 style='color:#FFD700;'>9. Platform: AIP</h4>
+                          <h6>Model deployment for inference.</h6>"""}, 
+                          'default', 'left', width=200),
+        StreamlitFlowNode("step_10", layout.layout["step_10"], 
+                          {'content': """<h4 style='color:#FFD700;'>10. Platform: AIP</h4>
+                        <h6>Monitoring and performance tracking.</h6>"""}, 
+                          'default', 'left', width=200),
+    ]
+
+    edges = [
+        StreamlitFlowEdge(f"ds_to_step_{i}", "data_scientist", f"step_{i}", animated=True, color="blue", width=2) for i in range(1, 12)
+    ] + [
+        StreamlitFlowEdge(f"step_{i}_to_{i+1}", f"step_{i}", f"step_{i+1}", animated=True, color="green", width=2) for i in range(1, 11)
+    ]
+
+    # Use the full width of the screen
+    container = st.container()
+    with container:
+        selected_id = streamlit_flow('ai_ml_platform_flow',
+                                     nodes,
+                                     edges,
+                                     layout=layout,  # Pass the wrapped layout
+                                     fit_view=True,
+                                     height=700,
+                                     get_node_on_click=True)
+
+    if selected_id:
+        st.toast(f"{show_node_details(selected_id)}")
+
+    st.header("Components of AI/ML Platform")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.subheader("MLP (Machine Learning Platform)")
+        st.write("- Data preparation and visualization")
+        st.write("- Feature engineering")
+        st.write("- Model training and tuning")
+        st.write("- MLFlow for model packaging")
+
+    with col2:
+        st.subheader("AI Workbench")
+        st.write("- Model experimentation and tuning")
+        st.write("- Explainable AI (XAI)")
+        st.write("- Model simulation and calibration")
+        st.write("- Post-production validation and A/B testing")
+
+    with col3:
+        st.subheader("AIP (AI Platform)")
+        st.write("- Model deployment and inference")
+        st.write("- Platform monitoring and availability")
+        st.write("- Performance tracking and alerts")
+
+    # Flow Legend
+    st.header("Flow Legend")
+    flow_legend = {
+        "Data Exploration": "#D3D3D3",  # Light Gray
+        "Model Training": "#ADD8E6",  # Light Blue
+        "Model Tuning": "#90EE90",  # Light Green
+        "Model Deployment": "#FFFFE0"  # Light Yellow
+    }
+    cols = st.columns(len(flow_legend))
+    for i, (step, color) in enumerate(flow_legend.items()):
+        with cols[i]:
+            st.markdown(f"<span style='background-color: {color}; padding: 5px; display: inline-block; width: 100%; text-align: center;'>{step}</span>", unsafe_allow_html=True)
+
+    st.info("This diagram represents the sequential flow of the AI/ML platform, with the Data Scientist at the center interacting with various stages of the process.")
+
+if __name__ == "__main__":
+    main()
