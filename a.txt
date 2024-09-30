@@ -3,13 +3,13 @@ from streamlit_flow import streamlit_flow
 from streamlit_flow.elements import StreamlitFlowNode, StreamlitFlowEdge
 import math
 
-# Adjusted layout logic remains the same
-def create_circular_layout(center_node, other_nodes, radius=450):  # Increased radius for more space
+# Adjusted layout logic
+def create_circular_layout(center_node, other_nodes, radius=450):
     layout = {center_node: (0, 0)}
     num_nodes = len(other_nodes)
-    start_angle = -math.pi / 2  # Start at 12 o'clock position
+    start_angle = -math.pi / 2
     for i, node in enumerate(other_nodes):
-        angle = start_angle + (2 * math.pi * i / (num_nodes))  # More even spacing
+        angle = start_angle + (2 * math.pi * i / (num_nodes))
         x = radius * math.cos(angle)
         y = radius * math.sin(angle)
         layout[node] = (x, y)
@@ -39,25 +39,27 @@ def show_node_details(node_id):
     }
     return details.get(node_id, "No details available.")
 
+@st.dialog("Node Details")
+def show_node_dialog(node_id):
+    st.markdown(show_node_details(node_id), unsafe_allow_html=True)
+
 def main():
-    st.set_page_config(layout="wide")  # Use full screen width
+    st.set_page_config(layout="wide")
 
     st.title("AI/ML Platform for Data Scientists")
     st.subheader("Enabling Data Scientists to Build Efficient Models")
 
     center_node = "data_scientist"
     other_nodes = [f"step_{i}" for i in range(1, 12)]
-    layout = create_circular_layout(center_node, other_nodes, radius=450)  # More spaced layout
-    layout = LayoutWrapper(layout)  # Wrap the layout in the LayoutWrapper class
+    layout = create_circular_layout(center_node, other_nodes, radius=450)
+    layout = LayoutWrapper(layout)
 
-    # Updated node content with header size control and color assignment
     nodes = [
         StreamlitFlowNode("data_scientist", layout.layout["data_scientist"], 
                           {'content': """<h4>Data Scientist (DS)</h4>
                           <h6>Understands business objectives, model purpose, and data features.</h6>""", 
                           'default': 'top', 'width': 150}),
         
-        # Assign red to MLP nodes
         StreamlitFlowNode("step_1", layout.layout["step_1"], 
                           {'content': """<h4 style='color:red;'>1. Platform: MLP</h4>
                           <h6>Data preparation using Hadoop, Spark, or Dask.</h6>"""}, 
@@ -83,7 +85,6 @@ def main():
                           <h6>Model packaging using MLFlow.</h6>"""}, 
                           'default', 'bottom', width=200),
         
-        # Assign blue to AI Workbench (AIW) nodes
         StreamlitFlowNode("step_7", layout.layout["step_7"], 
                           {'content': """<h4 style='color:blue;'>7. Platform: AI Workbench</h4>
                             <h6>Model experimentation and tuning.</h6>"""}, 
@@ -93,7 +94,6 @@ def main():
                           <h6>Post-production validation and A/B testing.</h6>"""}, 
                           'default', 'top', width=200),
         
-        # Assign light yellow shade to AIP nodes
         StreamlitFlowNode("step_8", layout.layout["step_8"], 
                           {'content': """<h4 style='color:#FFD700;'>8. Platform: AIP</h4>
                           <h6>ML OPS sanity check.</h6>"""}, 
@@ -114,19 +114,18 @@ def main():
         StreamlitFlowEdge(f"step_{i}_to_{i+1}", f"step_{i}", f"step_{i+1}", animated=True, color="green", width=2) for i in range(1, 11)
     ]
 
-    # Use the full width of the screen
     container = st.container()
     with container:
         selected_id = streamlit_flow('ai_ml_platform_flow',
                                      nodes,
                                      edges,
-                                     layout=layout,  # Pass the wrapped layout
+                                     layout=layout,
                                      fit_view=True,
                                      height=700,
                                      get_node_on_click=True)
 
     if selected_id:
-        st.toast(f"{show_node_details(selected_id)}")
+        show_node_dialog(selected_id)
 
     st.header("Components of AI/ML Platform")
     
@@ -152,7 +151,6 @@ def main():
         st.write("- Platform monitoring and availability")
         st.write("- Performance tracking and alerts")
 
-    # Flow Legend
     st.header("Flow Legend")
     flow_legend = {
         "Data Exploration": "#D3D3D3",  # Light Gray
